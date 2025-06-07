@@ -1,0 +1,22 @@
+POST http://localhost:3000/api/transactions
+Content-Type: application/json
+
+{
+    "transaction_title": "birthday party",
+    "transaction_amount": 15000,
+    "transaction_category": "expense",
+    "user_id" : "521"
+    
+}
+
+###
+
+GET http://localhost:3000/api/transactions/521
+
+###
+
+DELETE http://localhost:3000/api/transactions/4
+
+###
+
+GET http://localhost:3000/api/transactions/report/521
