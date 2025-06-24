@@ -3,10 +3,8 @@ import { getTransactionsByUserId , createTransaction, deleteTransaction, getRepo
 export const router = express.Router();
 
 
-router.get("/:user_Id", getTransactionsByUserId);
+router.get('/report/:user_Id', getReportByUserId); // ✅ specific route first
+router.get("/:user_Id", getTransactionsByUserId);  // ✅ generic route after
 router.post('/', createTransaction);
 router.delete('/:id', deleteTransaction);
-router.get('/report/:user_Id', getReportByUserId);
-
-
 export default router;
