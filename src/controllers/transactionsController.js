@@ -1,79 +1,80 @@
 import { sql } from "../config/db.js";
 
 export async function getTransactionsByUserId(req, res) {
-    try {
-        const { user_id } = req.params;
-        const { type } = req.query;
+  try {
+    const { userId } = req.params; // ensure this matches your router
+    const { type } = req.query;
 
-        if (!user_id) {
-            return res.status(400).json({ message: 'User ID is required.' });
-        }
-
-        let transactions;
-
-        if (type) {
-            transactions = await sql`
-                SELECT id, user_id, transaction_title, transaction_amount, transaction_category, transaction_type, related_user, created_at
-                FROM transactions
-                WHERE user_id = ${user_id} AND transaction_type = ${type}
-                ORDER BY created_at DESC
-            `;
-        } else {
-            transactions = await sql`
-                SELECT id, user_id, transaction_title, transaction_amount, transaction_category, transaction_type, related_user, created_at
-                FROM transactions
-                WHERE user_id = ${user_id}
-                ORDER BY created_at DESC
-            `;
-        }
-
-        res.status(200).json(transactions);
-    } catch (error) {
-        console.error('Error getting transactions:', error);
-        return res.status(500).json({ message: 'Internal server error' });
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required.' });
     }
+
+    const baseQuery = sql`
+      SELECT id, user_id, transaction_title, transaction_amount, transaction_category,
+             transaction_type, related_user, created_at
+      FROM transactions
+      WHERE user_id = ${userId}
+      ${type ? sql`AND transaction_type = ${type}` : sql``}
+      ORDER BY created_at DESC
+    `;
+
+    const transactions = await baseQuery;
+    res.status(200).json(transactions);
+  } catch (error) {
+    console.error('Error getting transactions:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
 
-export async function createTransaction(req, res){
-    try {
-        const {
-            transaction_title,
-            transaction_amount,
-            transaction_category,
-            transaction_type,
-            user_id,
-            related_user
-        } = req.body;
-        
-        // Validate input
-        if (!transaction_title || transaction_amount === undefined || !transaction_category || !transaction_type || !user_id) {
-            return res.status(400).json({ message : 'All fields are required' });
-        }
+export async function createTransaction(req, res) {
+  try {
+    const {
+      transaction_title,
+      transaction_amount,
+      transaction_category,
+      transaction_type,
+      user_id,
+      related_user
+    } = req.body;
 
-        const validTypes = ['Income', 'Expense', 'Lend', 'Borrow'];
-        if (!validTypes.includes(transaction_type)) {
-            return res.status(400).json({ message: 'Invalid transaction type. Must be Income, Expense, Lend, or Borrow.' });
-        }
-        if ((transaction_type === 'Lend' || transaction_type === 'Borrow') && !related_user) {
-        return res.status(400).json({ message : 'related_user is required for Lend or Borrow' });
-        }
+    console.log('Incoming request body:', req.body);
 
-        const transaction = await sql`
-        INSERT INTO transactions (user_id, transaction_title, transaction_amount, transaction_category, transaction_type, related_user)
-        VALUES (${user_id}, ${transaction_title}, ${transaction_amount}, ${transaction_category}, ${transaction_type},${related_user})
-        RETURNING *
-        `;
-        
-        res.status(201).json({
-            message: 'Transaction created successfully',
-            transaction: transaction[0]
-        });
-    } catch (error) {
-        console.error('Error processing request:', error);
-        return res.status(500).json({ message: 'Internal server error' });
+    if (!transaction_title || transaction_amount === undefined || !transaction_category || !transaction_type || !user_id) {
+      return res.status(400).json({ message: 'All fields are required' });
     }
+
+    const validTypes = ['Income', 'Expense', 'Lend', 'Borrow'];
+    if (!validTypes.includes(transaction_type)) {
+      return res.status(400).json({ message: 'Invalid transaction type.' });
+    }
+
+    if ((transaction_type === 'Lend' || transaction_type === 'Borrow') && !related_user) {
+      return res.status(400).json({ message: 'related_user is required for Lend or Borrow' });
+    }
+
+    const result = await sql`
+      INSERT INTO transactions (
+        user_id, transaction_title, transaction_amount,
+        transaction_category, transaction_type, related_user
+      )
+      VALUES (
+        ${user_id}, ${transaction_title}, ${transaction_amount},
+        ${transaction_category}, ${transaction_type}, ${related_user}
+      )
+      RETURNING *
+    `;
+
+    res.status(201).json({
+      message: 'Transaction created successfully',
+      transaction: result[0]
+    });
+  } catch (error) {
+    console.error('Error processing request:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 }
+
 
 
 
