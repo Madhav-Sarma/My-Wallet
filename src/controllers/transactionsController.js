@@ -2,18 +2,30 @@ import { sql } from "../config/db.js";
 
 export async function getTransactionsByUserId(req, res) {
     try {
-        const { user_Id } = req.params;
+        const { user_id } = req.params;
         const { type } = req.query;
 
-        if (!user_Id){
-            return res.status(400).json({ message: 'User does not exist. User ID is required.' });
+        if (!user_id) {
+            return res.status(400).json({ message: 'User ID is required.' });
         }
 
-        const query = type
-          ? sql`SELECT * FROM transactions WHERE user_id = ${user_Id} AND transaction_type = ${type} ORDER BY created_at DESC`
-          : sql`SELECT * FROM transactions WHERE user_id = ${user_Id} ORDER BY created_at DESC`;
+        let transactions;
 
-        const transactions = await query;
+        if (type) {
+            transactions = await sql`
+                SELECT id, user_id, transaction_title, transaction_amount, transaction_category, transaction_type, related_user, created_at
+                FROM transactions
+                WHERE user_id = ${user_id} AND transaction_type = ${type}
+                ORDER BY created_at DESC
+            `;
+        } else {
+            transactions = await sql`
+                SELECT id, user_id, transaction_title, transaction_amount, transaction_category, transaction_type, related_user, created_at
+                FROM transactions
+                WHERE user_id = ${user_id}
+                ORDER BY created_at DESC
+            `;
+        }
 
         res.status(200).json(transactions);
     } catch (error) {
@@ -30,7 +42,8 @@ export async function createTransaction(req, res){
             transaction_amount,
             transaction_category,
             transaction_type,
-            user_id
+            user_id,
+            related_user
         } = req.body;
         
         // Validate input
@@ -42,10 +55,13 @@ export async function createTransaction(req, res){
         if (!validTypes.includes(transaction_type)) {
             return res.status(400).json({ message: 'Invalid transaction type. Must be Income, Expense, Lend, or Borrow.' });
         }
+        if ((transaction_type === 'Lend' || transaction_type === 'Borrow') && !related_user) {
+        return res.status(400).json({ message : 'related_user is required for Lend or Borrow' });
+        }
 
         const transaction = await sql`
-        INSERT INTO transactions (user_id, transaction_title, transaction_amount, transaction_category, transaction_type)
-        VALUES (${user_id}, ${transaction_title}, ${transaction_amount}, ${transaction_category}, ${transaction_type})
+        INSERT INTO transactions (user_id, transaction_title, transaction_amount, transaction_category, transaction_type, related_user)
+        VALUES (${user_id}, ${transaction_title}, ${transaction_amount}, ${transaction_category}, ${transaction_type},${related_user})
         RETURNING *
         `;
         
