@@ -8,10 +8,22 @@ Content-Type: application/json
     "user_id" : "521"
     
 }
+###
+POST http://localhost:3000/api/transactions 
+Content-Type: application/json
+
+{
+  "transaction_title": "Borrowed from Alice",
+  "transaction_amount": 500,
+  "transaction_category": "Personal",
+  "transaction_type": "Borrow",
+  "user_id": "user_2yBzKvMhdBnotDl5bAKxHHEdZct",
+  "related_user": "Alice"
+}
 
 ###
 
-GET http://localhost:3000/api/transactions/521
+GET http://localhost:3000/api/transactions/user_2yBzKvMhdBnotDl5bAKxHHEdZct
 
 ###
 
@@ -19,4 +31,4 @@ DELETE http://localhost:3000/api/transactions/4
 
 ###
 
-GET http://localhost:3000/api/transactions/report/521
+GET http://localhost:3000/api/transactions/report/user_2yBzKvMhdBnotDl5bAKxHHEdZct

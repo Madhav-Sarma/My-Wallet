@@ -2,10 +2,10 @@ import { sql } from "../config/db.js";
 
 export async function getTransactionsByUserId(req, res) {
   try {
-    const { userId } = req.params; // ensure this matches your router
+    const { user_Id } = req.params; // ensure this matches your router
     const { type } = req.query;
 
-    if (!userId) {
+    if (!user_Id) {
       return res.status(400).json({ message: 'User ID is required.' });
     }
 
@@ -13,7 +13,7 @@ export async function getTransactionsByUserId(req, res) {
       SELECT id, user_id, transaction_title, transaction_amount, transaction_category,
              transaction_type, related_user, created_at
       FROM transactions
-      WHERE user_id = ${userId}
+      WHERE user_id = ${user_Id}
       ${type ? sql`AND transaction_type = ${type}` : sql``}
       ORDER BY created_at DESC
     `;
